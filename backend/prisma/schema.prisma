@@ -1,0 +1,83 @@
+datasource db {
+  provider = "sqlite"
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+
+model User {
+  id           String     @id @default(uuid())
+  email        String     @unique
+  passwordHash String
+  name         String
+  role         String     @default("CUSTOMER") // CUSTOMER | ADMIN
+  createdAt    DateTime   @default(now())
+  bookings     Booking[]
+  reviews      Review[]
+  blogPosts    BlogPost[]
+}
+
+model Tour {
+  id              String    @id @default(uuid())
+  title           String
+  description     String
+  price           Float
+  durationDays    Int
+  location        String
+  imageCover      String
+  images          String    @default("[]") // JSON stringified array of images
+  maxGroupSize    Int
+  difficulty      String    @default("MEDIUM") // EASY | MEDIUM | DIFFICULT
+  ratingsAverage  Float     @default(4.5)
+  ratingsQuantity Int       @default(0)
+  active          Boolean   @default(true)
+  itinerary       String    @default("[]") // JSON stringified array of ItineraryItem
+  createdAt       DateTime  @default(now())
+  bookings        Booking[]
+  reviews         Review[]
+}
+
+model Booking {
+  id             String   @id @default(uuid())
+  tourId         String
+  tour           Tour     @relation(fields: [tourId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  price          Float
+  status         String   @default("PENDING") // PENDING | PAID | CANCELLED
+  bookingDate    DateTime
+  travelersCount Int
+  contactInfo    String   // JSON stringified contact info
+  createdAt      DateTime @default(now())
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  tourId     String
+  tour       Tour     @relation(fields: [tourId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating     Int
+  reviewText String
+  createdAt  DateTime @default(now())
+
+  @@unique([tourId, userId]) // one review per user per tour
+}
+
+model BlogPost {
+  id         String   @id @default(uuid())
+  title      String
+  slug       String   @unique
+  content    String
+  summary    String
+  category   String // Travel tips | Visa guides | Packing lists | Best destinations | Travel news | Photography | Budget travel
+  imageCover String
+  published  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  authorId   String
+  author     User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+}
+

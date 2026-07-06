@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+/* ===== GRAPHIVIO BRAND COLORS (LIGHT THEME DEFAULT) ===== */
+/* Primary:   #EE9B00 (Summer Sun)   */
+/* Secondary: #005F73 (Sky Blue)     */
+/* Accent:    #0A9396 (Teal Ocean)   */
+/* Neutral:   #FFF9F4 (White Cloud)  */
+
+:root {
+  --brand-primary: #EE9B00;
+  --brand-secondary: #005F73;
+  --brand-accent: #0A9396;
+  --brand-neutral: #FFF9F4;
+
+  /* White/Light backgrounds */
+  --bg-base: #FFFFFF;
+  /* default background is white */
+  --bg-surface: #FFF9F4;
+  /* card/surface is soft white cloud */
+  --bg-raised: #F4F9FA;
+  /* slightly raised background */
+  --bg-border: rgba(0, 95, 115, 0.15);
+  /* secondary color as soft border */
+
+  /* Dark text colors for high readability */
+  --text-primary: #0F2027;
+  /* dark slate-black */
+  --text-muted: #4A6B74;
+  /* medium slate-gray */
+  --text-faint: #789CA5;
+  /* light slate-gray */
+}
+
+@theme inline {
+  --color-primary: var(--brand-primary);
+  --color-secondary: var(--brand-secondary);
+  --color-accent: var(--brand-accent);
+  --color-neutral: var(--brand-neutral);
+
+  --color-bg-base: var(--bg-base);
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-raised: var(--bg-raised);
+  --color-bg-border: var(--bg-border);
+}
+
+/* ===== BASE STYLES ===== */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== CUSTOM SCROLLBAR ===== */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FFFFFF;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 95, 115, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-primary);
+}
+
+/* ===== SELECTION ===== */
+::selection {
+  background: var(--brand-primary);
+  color: #FFFFFF;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+a {
+  transition: all 0.2s ease;
+}
