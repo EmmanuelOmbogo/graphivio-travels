@@ -13,20 +13,30 @@ import { Star, Search, SlidersHorizontal, Loader2, Map } from 'lucide-react';
 function ToursContent() {
   const searchParams = useSearchParams();
 
-  const [locationInput, setLocationInput] = useState(searchParams.get('location') || '');
+  // Read all possible query params from URL
+  const urlSearch = searchParams.get('search') || '';
+  const urlLocation = searchParams.get('location') || '';
+  const urlDifficulty = searchParams.get('difficulty') || '';
+  const urlCategory = searchParams.get('category') || '';
+
+  const [locationInput, setLocationInput] = useState(urlSearch || urlLocation);
   const [sortOrder, setSortOrder] = useState('price-asc');
-  const [appliedLocation, setAppliedLocation] = useState(searchParams.get('location') || '');
+  const [appliedFilter, setAppliedFilter] = useState(urlSearch || urlLocation);
+  const [activeDifficulty, setActiveDifficulty] = useState(urlDifficulty);
 
   useEffect(() => {
-    setLocationInput(searchParams.get('location') || '');
-    setAppliedLocation(searchParams.get('location') || '');
+    const newFilter = searchParams.get('search') || searchParams.get('location') || '';
+    const newDiff = searchParams.get('difficulty') || '';
+    setLocationInput(newFilter);
+    setAppliedFilter(newFilter);
+    setActiveDifficulty(newDiff);
   }, [searchParams]);
 
   const { data: tours, isLoading } = useQuery<Tour[]>({
-    queryKey: ['tours', appliedLocation],
+    queryKey: ['tours', appliedFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (appliedLocation) params.set('location', appliedLocation);
+      if (appliedFilter) params.set('location', appliedFilter);
       const res = await api.get(`/tours?${params.toString()}`);
       return res.data;
     },
@@ -34,7 +44,8 @@ function ToursContent() {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setAppliedLocation(locationInput);
+    setAppliedFilter(locationInput);
+    setActiveDifficulty('');
   };
 
   const mockTours: Tour[] = [
@@ -72,12 +83,44 @@ function ToursContent() {
     },
   ];
 
-  // Process sorting & location filter
+  // Category keyword mapping for navbar dropdown links
+  const categoryKeywords: Record<string, string[]> = {
+    safari: ['safari', 'mara', 'wildlife', 'game', 'reserve', 'national park'],
+    beach: ['beach', 'diani', 'coastal', 'ocean', 'island'],
+    honeymoon: ['honeymoon', 'romantic', 'couple', 'seychelles', 'resort'],
+    balloon: ['balloon', 'air'],
+    expedition: ['expedition', 'rainforest', 'forest', 'hike', 'trek', 'UNESCO'],
+    car: ['car', 'hire', 'drive', 'transfer'],
+  };
+
+  // Process sorting & all active filters
   const processTours = () => {
     let result = tours && tours.length > 0 ? [...tours] : [...mockTours];
 
-    if (appliedLocation) {
-      result = result.filter(t => t.location.toLowerCase().includes(appliedLocation.toLowerCase()));
+    // Text / location filter (from search bar or ?search= / ?location= params)
+    if (appliedFilter) {
+      result = result.filter(t =>
+        t.location.toLowerCase().includes(appliedFilter.toLowerCase()) ||
+        t.title.toLowerCase().includes(appliedFilter.toLowerCase()) ||
+        t.description.toLowerCase().includes(appliedFilter.toLowerCase())
+      );
+    }
+
+    // Difficulty filter (from ?difficulty= param)
+    if (activeDifficulty) {
+      result = result.filter(t => t.difficulty === activeDifficulty);
+    }
+
+    // Category keyword filter (from ?category= or ?search= param)
+    const catKey = urlCategory.toLowerCase();
+    if (catKey && categoryKeywords[catKey]) {
+      result = result.filter(t =>
+        categoryKeywords[catKey].some(kw =>
+          t.title.toLowerCase().includes(kw) ||
+          t.description.toLowerCase().includes(kw) ||
+          t.location.toLowerCase().includes(kw)
+        )
+      );
     }
 
     if (sortOrder === 'price-asc') {
@@ -93,6 +136,20 @@ function ToursContent() {
 
   const finalTours = processTours();
 
+  // Compute human-readable page title based on active filters
+  const pageTitle = (() => {
+    if (activeDifficulty === 'EASY') return 'Easy Sightseeing Tours';
+    if (activeDifficulty === 'MEDIUM') return 'Medium Trek Adventures';
+    if (activeDifficulty === 'DIFFICULT') return 'Challenging Expedition Climbs';
+    if (urlCategory === 'safari') return 'Wildlife Safari Tours';
+    if (urlCategory === 'beach') return 'Coastal Beach Escapes';
+    if (urlCategory === 'honeymoon') return 'Romantic Getaways';
+    if (urlCategory === 'balloon') return 'Hot Air Balloon Safaris';
+    if (urlCategory === 'expedition') return 'Rainforest Expedition Hikes';
+    if (appliedFilter) return `Results for "${appliedFilter}"`;
+    return 'Explore All Adventures';
+  })();
+
   return (
     <div className="flex flex-col min-h-screen bg-white">
       <Navbar />
@@ -102,11 +159,35 @@ function ToursContent() {
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-3xl font-extrabold tracking-tight" style={{ color: '#0F2027' }}>
-            Explore All Adventures
+            {pageTitle}
           </h1>
           <p className="text-sm mt-1" style={{ color: '#4A6B74' }}>
-            Discover customized plans and curated experiences in Kenya & Seychelles.
+            {finalTours.length > 0
+              ? `${finalTours.length} tour${finalTours.length !== 1 ? 's' : ''} found — curated experiences in Kenya & beyond.`
+              : 'Discover customized plans and curated experiences in Kenya & Seychelles.'}
           </p>
+          {/* Active filter pills */}
+          {(appliedFilter || activeDifficulty || urlCategory) && (
+            <div className="flex flex-wrap gap-2 mt-3">
+              {appliedFilter && (
+                <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full bg-orange-50 border border-orange-200 text-orange-600">
+                  📍 {appliedFilter}
+                  <button onClick={() => { setAppliedFilter(''); setLocationInput(''); }} className="ml-1 hover:text-red-500 cursor-pointer">✕</button>
+                </span>
+              )}
+              {activeDifficulty && (
+                <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-600">
+                  🎯 {activeDifficulty.charAt(0) + activeDifficulty.slice(1).toLowerCase()}
+                  <button onClick={() => setActiveDifficulty('')} className="ml-1 hover:text-red-500 cursor-pointer">✕</button>
+                </span>
+              )}
+              {urlCategory && (
+                <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full bg-teal-50 border border-teal-200 text-teal-600">
+                  🏷️ {urlCategory.charAt(0).toUpperCase() + urlCategory.slice(1)}
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* ── Horizontal Filter Bar ── */}
@@ -135,10 +216,10 @@ function ToursContent() {
                 <Search className="h-4 w-4" />
               </button>
             </div>
-            {appliedLocation && (
+            {appliedFilter && (
               <button
                 type="button"
-                onClick={() => { setLocationInput(''); setAppliedLocation(''); }}
+                onClick={() => { setLocationInput(''); setAppliedFilter(''); }}
                 className="text-xs font-bold hover:underline cursor-pointer text-red-500 whitespace-nowrap"
               >
                 Clear

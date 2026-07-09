@@ -12,6 +12,7 @@ export default function RegisterPage() {
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,7 +22,7 @@ export default function RegisterPage() {
     setErrorMsg('');
     setLoading(true);
     try {
-      await register(email, password, name);
+      await register(email, password, name, phone);
       router.push('/');
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || 'Failed to create an account. Please try again.');
@@ -85,6 +86,7 @@ export default function RegisterPage() {
             {[
               { id: 'name', label: 'Full Name', type: 'text', value: name, onChange: setName, placeholder: 'John Doe' },
               { id: 'email', label: 'Email Address', type: 'email', value: email, onChange: setEmail, placeholder: 'you@example.com' },
+              { id: 'phone', label: 'Phone Number', type: 'tel', value: phone, onChange: setPhone, placeholder: '+1 (555) 000-0000' },
               { id: 'password', label: 'Password', type: 'password', value: password, onChange: setPassword, placeholder: 'Min. 8 characters' },
             ].map(({ id, label, type, value, onChange, placeholder }) => (
               <div key={id}>
